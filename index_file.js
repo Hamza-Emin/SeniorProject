@@ -28,3 +28,7 @@ function openLiveProcessing() {
 function openSettings() {
     
 }
+
+function openBacklog() {
+    window.open('backlog.jpeg', '_blank');
+}
