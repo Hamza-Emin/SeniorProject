@@ -53,13 +53,15 @@ def process_temp_image(temp_file_path, method="bilateral", save=False, save_path
 
     # Call the remove_noise function
     denoised_image = remove_noise(image_rgb, method=method)
+    denoised_image = cv2.cvtColor(denoised_image, cv2.COLOR_BGR2RGB)
 
     if save:
         if save_path is None:
             raise ValueError("save_path must be provided if save is True.")
         # Convert the image back to BGR for saving with OpenCV
-        denoised_bgr = cv2.cvtColor(denoised_image, cv2.COLOR_RGB2BGR)
+        denoised_bgr = cv2.cvtColor(denoised_image, cv2.COLOR_BGR2RGB)
         cv2.imwrite(save_path, denoised_bgr)
+
 
     return denoised_image
 

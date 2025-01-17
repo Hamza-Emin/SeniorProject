@@ -263,11 +263,20 @@ class ImagePage(QWidget):
         if not hasattr(self, 'temp_path') or self.temp_path is None:
             print("No valid temporary path found.")
             return
+        try:
+            adjusted_image = process_image(self.temp_path)
+            self.temp_path = TempImageSaver.save_temp_image(adjusted_image)
+            print(f"Depth map and anaglyph image generated and saved temporarily at {self.temp_path}.")
+            self.display_output_image(QPixmap.fromImage(TempImageSaver.convert_cv_to_qimage(adjusted_image)))
+        except Exception as e:
+            # Display the error using a message box
+            error_message = QMessageBox()
+            error_message.setIcon(QMessageBox.Critical)
+            error_message.setWindowTitle("Error")
+            error_message.setText("An error occurred during depth map and anaglyph generation.")
+            error_message.setInformativeText(str(e))
+            error_message.exec_()
 
-        adjusted_image = process_image(self.temp_path)
-        self.temp_path = TempImageSaver.save_temp_image(adjusted_image)
-        print(f"Depth map and anaglyph image generated and saved temporarily at {self.temp_path}.")
-        self.display_output_image(QPixmap.fromImage(TempImageSaver.convert_cv_to_qimage(adjusted_image)))
 
 
     def generate_depth_map_and_anaglyph(self):
@@ -282,7 +291,8 @@ class ImagePage(QWidget):
             anaglyph_image = generate_anaglyph(self.temp_path, depth_map)
             self.temp_path = TempImageSaver.save_temp_image(anaglyph_image)
             print(f"Depth map and anaglyph image generated and saved temporarily at {self.temp_path}.")
-            self.display_output_image(QPixmap.fromImage(QImage(anaglyph_image)))
+            self.display_output_image(QPixmap.fromImage(TempImageSaver.convert_cv_to_qimage(anaglyph_image)))
+            #self.display_output_image(QPixmap.fromImage(QImage(anaglyph_image)))
         except Exception as e:
             # Display the error using a message box
             error_message = QMessageBox()
@@ -305,7 +315,7 @@ class ImagePage(QWidget):
             # Save the denoised image temporarily
             self.temp_path = TempImageSaver.save_temp_image(denoised_image)
             print(f"Noise removal applied and saved temporarily at {self.temp_path}.")
-            self.display_output_image(QPixmap.fromImage(QImage(denoised_image)))
+            self.display_output_image(QPixmap.fromImage(TempImageSaver.convert_cv_to_qimage(denoised_image)))
         except Exception as e:
             # Display the error using a message box
             error_message = QMessageBox()
@@ -337,7 +347,7 @@ class ImagePage(QWidget):
             upscaled_image = upscale_image(self.selected_image_path, model_path)
             # Save the upscaled image temporarily
             self.temp_path = TempImageSaver.save_temp_image(upscaled_image)
-            self.display_output_image(QPixmap.fromImage(upscaled_image))
+            self.display_output_image(QPixmap.fromImage(TempImageSaver.convert_cv_to_qimage(upscaled_image)))
             print(f"Upscaled image (x{factor}) applied and saved temporarily at {self.temp_path}.")
         except Exception as e:
             # Display the error using a message box
@@ -362,6 +372,17 @@ class ImagePage(QWidget):
                 pixmap_item = items[0]  # Assuming one item in the scene
                 pixmap = pixmap_item.pixmap()
                 pixmap.save(save_path)
+
+    def resizeEvent(self, event):
+        # Ensure the input and output views fit the scene rect properly on resize
+        if not self.input_graphics_scene.sceneRect().isNull():
+            self.input_graphics_view.fitInView(self.input_graphics_scene.sceneRect(), Qt.KeepAspectRatio)
+
+        if not self.output_graphics_scene.sceneRect().isNull():
+            self.output_graphics_view.fitInView(self.output_graphics_scene.sceneRect(), Qt.KeepAspectRatio)
+
+        # Call the parent resize event
+        super().resizeEvent(event)
 
     @staticmethod
     def get_button_stylesheet():

@@ -35,7 +35,7 @@ class VideoPage(QWidget):
         self.save_button.setFixedSize(200, 40)
         self.save_button.clicked.connect(self.open_save_dialog)
         self.save_button.setStyleSheet(self.get_button_stylesheet())
-        upper_layout.addWidget(self.save_button, alignment=Qt.AlignLeft)
+        upper_layout.addWidget(self.save_button, alignment=Qt.AlignBaseline)
 
         self.file_label = QLabel("Video Location")
         self.file_label.setAlignment(Qt.AlignRight)
@@ -195,6 +195,17 @@ class VideoPage(QWidget):
         pixmap = QPixmap.fromImage(q_image)
         scene.clear()
         scene.addPixmap(pixmap)
+
+    def resizeEvent(self, event):
+        # Ensure the input and output views fit the scene rect properly on resize
+        if not self.input_graphics_scene.sceneRect().isNull():
+            self.input_graphics_view.fitInView(self.input_graphics_scene.sceneRect(), Qt.KeepAspectRatio)
+
+        if not self.output_graphics_scene.sceneRect().isNull():
+            self.output_graphics_view.fitInView(self.output_graphics_scene.sceneRect(), Qt.KeepAspectRatio)
+
+        # Call the parent resize event
+        super().resizeEvent(event)
 
     @staticmethod
     def get_button_stylesheet():

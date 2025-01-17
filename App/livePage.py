@@ -49,7 +49,6 @@ class LivePage(QWidget):
         # Bottom part with buttons
         bottom_layout = QHBoxLayout()
 
-
         start_button = QPushButton("Start Live Feed")
         start_button.setFixedSize(150, 40)
         start_button.clicked.connect(self.start_live_feed)
@@ -80,17 +79,23 @@ class LivePage(QWidget):
             return
 
         # Display the original frame
-        self.display_frame(self.input_graphics_scene, frame)
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        self.display_frame(self.input_graphics_scene, frame_rgb)
 
         # Process the frame using process_live_to_3d
         processed_frame = self.video_processor.process_live_to_3d(frame)
 
+        # Convert the processed frame to RGB
+        processed_frame_rgb = cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB)
+
         # Display the processed frame
-        self.display_frame(self.output_graphics_scene, processed_frame)
+        self.display_frame(self.output_graphics_scene, processed_frame_rgb)
 
     def display_frame(self, scene, frame):
         height, width, channels = frame.shape
         bytes_per_line = channels * width
+        #frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
         q_image = QImage(frame.data, width, height, bytes_per_line, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(q_image)
         scene.clear()

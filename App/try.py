@@ -25,6 +25,26 @@ from imagePage import ImagePage
 from livePage import LivePage
 from videoPage import VideoPage
 
+class BackgroundLabel(QLabel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setMinimumSize(1, 1)
+        self.setAlignment(Qt.AlignCenter)
+
+    def setPixmap(self, pm):
+        self.origPixmap = pm
+        self.updatePixmap()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.updatePixmap()
+
+    def updatePixmap(self):
+        if hasattr(self, 'origPixmap'):
+            # Arka planı pencere boyutlarına tam uyacak şekilde ölçekle
+            scaled = self.origPixmap.scaled(self.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation)
+            super().setPixmap(scaled)
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -32,17 +52,33 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("3DifyMe")
         self.setGeometry(100, 100, 1200, 800)
 
-        # Create the main widget and layout
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QHBoxLayout()
+        # Create and set the background
+        self.background = BackgroundLabel(self)
+        self.background.setPixmap(QPixmap("3DIFYME.png"))
+        self.setCentralWidget(self.background)
 
-        # Create and add the PageManager
+        # Create main widget and make it transparent
+        self.main_widget = QWidget(self.background)
+        self.main_widget.setStyleSheet("background: transparent;")
+
+        # Create and set layout
+        main_layout = QHBoxLayout(self.main_widget)
         self.page_manager = PageManager()
         main_layout.addWidget(self.page_manager.left_bar)
         main_layout.addWidget(self.page_manager.page_stack)
 
-        central_widget.setLayout(main_layout)
+        # Make the main widget fill the background
+        self.main_widget.setGeometry(0, 0, self.width(), self.height())
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.main_widget.setGeometry(0, 0, self.width(), self.height())
+
+
+    def updatePixmap(self):
+        if hasattr(self, 'origPixmap'):
+            scaled = self.origPixmap.scaled(self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            super().setPixmap(scaled)
 
 class PageManager:
     def __init__(self):
@@ -149,7 +185,15 @@ class HelpPage(QWidget):
     def __init__(self):
         super().__init__()
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Help Page"))
+        label = QLabel("For any inquiries or support, please contact the developer at info@3difyme.com.")
+        label.setStyleSheet("""
+            QLabel {
+                font-size: 25px;
+                padding: 5px;
+            }
+        """)
+        layout.addWidget(label)
+
         self.setLayout(layout)
 
 
@@ -162,11 +206,11 @@ if __name__ == "__main__":
         QMainWindow {
             background: qlineargradient(
                     spread:pad, x1:0, y1:0, x2:1, y2:1,
-                    stop:0 rgba(15, 82, 186, 255),  /* #0F52BA - Sapphire Blue */
-                    stop:0.25 rgba(30, 144, 255, 255), /* #1E90FF - Dodger Blue */
-                    stop:0.5 rgba(59, 153, 216, 255), /* #3B99D8 - Medium Blue */
-                    stop:0.75 rgba(91, 179, 224, 255), /* #5BB3E0 - Light Blue */
-                    stop:1 rgba(123, 198, 232, 255)  /* #7BC6E8 - Sky Blue */
+                    stop:0 rgba(15, 82, 186, 0),  /* #0F52BA - Sapphire Blue */
+                    stop:0.25 rgba(30, 144, 255, 0), /* #1E90FF - Dodger Blue */
+                    stop:0.5 rgba(59, 153, 216, 0), /* #3B99D8 - Medium Blue */
+                    stop:0.75 rgba(91, 179, 224, 0), /* #5BB3E0 - Light Blue */
+                    stop:1 rgba(123, 198, 232, 0)  /* #7BC6E8 - Sky Blue */
                 );
 
         }
@@ -182,5 +226,7 @@ if __name__ == "__main__":
     """)
 
     window = MainWindow()
+    window.setAttribute(Qt.WA_NoSystemBackground, True)
+    window.setAttribute(Qt.WA_TranslucentBackground, True)
     window.show()
     sys.exit(app.exec_())
